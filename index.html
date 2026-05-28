@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPH Fleksi KSSR Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+
+/* AUTH */
+#authWrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}
+.auth-card{background:#fff;border-radius:16px;padding:2.5rem 2rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.auth-logo{text-align:center;margin-bottom:1.5rem}
+.auth-logo h1{color:#667eea;font-size:26px;margin-bottom:.25rem}
+.auth-logo p{color:#718096;font-size:13px}
+.auth-tabs{display:flex;background:#f7fafc;border-radius:8px;padding:3px;margin-bottom:1.5rem}
+.auth-tab{flex:1;padding:.5rem;text-align:center;font-size:13px;font-weight:600;color:#718096;cursor:pointer;border-radius:6px;transition:.15s}
+.auth-tab.on{background:#fff;color:#667eea;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.fld{margin-bottom:.9rem}
+.fld label{display:block;font-size:11px;font-weight:700;color:#4a5568;margin-bottom:.3rem;text-transform:uppercase;letter-spacing:.04em}
+.fld input{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;transition:.15s;outline:none}
+.fld input:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.15)}
+.auth-btn{width:100%;padding:12px;border:none;border-radius:8px;background:#667eea;color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:.18s;margin-top:.5rem}
+.auth-btn:hover{background:#5568d3;transform:translateY(-1px)}
+.auth-err{font-size:12px;color:#e53e3e;background:#fff5f5;border:1px solid #fed7d7;padding:.5rem .75rem;border-radius:6px;margin-bottom:.75rem;display:none}
+.auth-err.on{display:block}
+.auth-notice{font-size:11.5px;color:#a0aec0;text-align:center;margin-top:.85rem}
+.auth-notice b{color:#718096}
+
+/* SETUP SUPABASE BANNER */
+#setupBanner{background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:1rem;margin-bottom:1rem;font-size:13px;color:#856404;display:none}
+#setupBanner.on{display:block}
+
+/* APP */
+#appWrap{display:none;height:100vh;flex-direction:column;overflow:hidden}
+#appWrap.on{display:flex}
+
+/* TOP BAR */
+.top-bar{background:#fff;padding:10px 16px;display:flex;gap:8px;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,.1);flex-shrink:0;flex-wrap:wrap}
+.top-bar-left{display:flex;gap:8px;flex:1;flex-wrap:wrap}
+.top-bar-right{display:flex;gap:8px;align-items:center}
+.btn-top{padding:9px 14px;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;transition:.2s;white-space:nowrap}
+.btn-save{background:#667eea;color:#fff}
+.btn-save:hover{background:#5568d3}
+.btn-save:disabled{opacity:.5;cursor:not-allowed}
+.btn-print{background:#48bb78;color:#fff}
+.btn-print:hover{background:#38a169}
+.btn-plans{background:#9f7aea;color:#fff}
+.btn-plans:hover{background:#805ad5}
+.btn-reset{background:#718096;color:#fff}
+.btn-reset:hover{background:#4a5568}
+.btn-logout{background:#fed7d7;color:#c53030;font-size:12px;padding:7px 12px}
+.btn-logout:hover{background:#feb2b2}
+.user-chip{font-size:12px;color:#718096;background:#f7fafc;border:1px solid #e2e8f0;border-radius:99px;padding:5px 12px;white-space:nowrap}
+
+/* MAIN */
+.main-content{flex:1;overflow-y:auto;padding:20px}
+.container{max-width:1000px;margin:0 auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+h1{text-align:center;margin-bottom:8px;color:#667eea;font-size:28px}
+.subtitle{text-align:center;color:#718096;margin-bottom:30px;font-size:14px}
+
+/* STATUS */
+.status-message{padding:12px 16px;border-radius:6px;margin-bottom:16px;font-size:14px;display:none}
+.status-message.show{display:block}
+.status-success{background:#c6f6d5;color:#22543d;border:1px solid #9ae6b4}
+.status-error{background:#fed7d7;color:#742a2a;border:1px solid #fc8181}
+
+/* SECTIONS */
+.section{margin-bottom:30px}
+.section-title{font-weight:700;font-size:16px;color:#2d3748;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #667eea}
+.label-title{font-weight:600;font-size:13px;color:#000;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+.curriculum-label{font-weight:600;font-size:13px;margin:12px 0 6px;text-transform:uppercase;letter-spacing:.5px;display:block;color:#000}
+.curriculum-label span{background:#667eea;color:#fff;padding:4px 8px;border-radius:3px;display:inline-block}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;font-family:inherit;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1)}
+textarea{resize:vertical;min-height:80px}
+.flex-row{display:flex;gap:16px;flex-wrap:wrap}
+.flex-col{flex:1;min-width:200px}
+.custom-subject-input{display:none;margin-top:8px}
+.custom-subject-input.show{display:block}
+
+/* ACTIVITIES */
+.activity-box{border:1px solid #e2e8f0;padding:16px;border-radius:8px;margin-top:12px;background:#f7fafc;transition:.2s}
+.activity-box:hover{border-color:#667eea;box-shadow:0 2px 8px rgba(102,126,234,.1)}
+.activity-row{display:flex;gap:12px;align-items:flex-start}
+.activity-minit{width:100px;flex-shrink:0}
+.activity-huraian{flex:1}
+.activity-remove{background:#fc8181;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:12px;flex-shrink:0;transition:background .2s}
+.activity-remove:hover{background:#f56565}
+.btn-add{background:#667eea;color:#fff;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;font-weight:600;margin-top:12px;transition:background .2s}
+.btn-add:hover{background:#5568d3}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;visibility:hidden;transition:.2s}
+.modal-overlay.on{opacity:1;visibility:visible}
+.modal-box{background:#fff;border-radius:12px;padding:1.5rem;width:100%;max-width:620px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-box h3{color:#2d3748;margin-bottom:1rem;font-size:16px}
+
+/* PLAN ITEMS */
+.plan-item{background:#f7fafc;padding:12px;border-radius:6px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid #667eea;transition:.2s}
+.plan-item:hover{background:#edf2f7}
+.plan-item-info{flex:1;min-width:0}
+.plan-item-subject{font-weight:700;font-size:14px;color:#2d3748;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.plan-item-meta{font-size:12px;color:#718096;margin-top:2px}
+.plan-item-btns{display:flex;gap:6px;flex-shrink:0;margin-left:8px}
+.plan-item-btns button{padding:6px 10px;border:none;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;transition:.15s}
+.btn-open{background:#667eea;color:#fff}
+.btn-open:hover{background:#5568d3}
+.btn-dl{background:#48bb78;color:#fff}
+.btn-dl:hover{background:#38a169}
+.btn-del{background:#fc8181;color:#fff}
+.btn-del:hover{background:#f56565}
+
+/* CONFIRM MODAL */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;visibility:hidden;transition:.2s}
+.confirm-overlay.on{opacity:1;visibility:visible}
+.confirm-box{background:#fff;border-radius:12px;padding:1.5rem;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.confirm-box h3{margin-bottom:.5rem;color:#2d3748}
+.confirm-box p{font-size:13px;color:#718096;margin-bottom:1.25rem}
+.confirm-btns{display:flex;gap:8px}
+.confirm-btns button{flex:1;padding:10px;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(60px);z-index:9999;background:#2d3748;color:#fff;font-size:13px;font-weight:600;padding:.6rem 1.2rem;border-radius:99px;box-shadow:0 8px 30px rgba(0,0,0,.2);opacity:0;transition:.28s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.on{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:.2s}
+.loading-overlay.on{opacity:1;visibility:visible}
+.spinner{width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#667eea;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media print{
+  .top-bar,.status-message{display:none!important}
+  body{background:#fff}
+  .main-content{padding:0;overflow:visible}
+  .container{box-shadow:none;max-width:100%;margin:0;border-radius:0}
+  input,select,textarea{border:none;background:transparent;padding:0}
+  select{appearance:none;-webkit-appearance:none;pointer-events:none}
+}
+@media(max-width:600px){
+  .top-bar{padding:8px 10px}
+  .btn-top{padding:8px 10px;font-size:12px}
+  .container{padding:16px}
+  h1{font-size:20px}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="authWrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <h1>📚 RPH Fleksi KSSR</h1>
+      <p>Rancangan Pengajaran Harian Fleksibel</p>
+    </div>
+    <div id="setupBanner">
+      ⚙️ <strong>Persediaan diperlukan:</strong> Sila masukkan URL dan Anon Key Supabase anda dalam kod sebelum deploy.
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab on" id="atL" onclick="switchAuth('login')">Log Masuk</div>
+      <div class="auth-tab" id="atR" onclick="switchAuth('reg')">Daftar</div>
+    </div>
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <div class="auth-err" id="loginErr"></div>
+      <div class="fld"><label>Emel</label><input type="email" id="loginEmail" placeholder="cikgu@sekolah.edu.my" onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()"></div>
+      <div class="fld"><label>Kata Laluan</label><input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="auth-btn" onclick="doLogin()">Log Masuk →</button>
+      <div style="text-align:center;margin-top:.75rem"><span style="font-size:12px;color:#667eea;cursor:pointer;text-decoration:underline" onclick="doForgotPass()">Terlupa kata laluan?</span></div>
+    </div>
+    <!-- REGISTER -->
+    <div id="regForm" style="display:none">
+      <div class="auth-err" id="regErr"></div>
+      <div class="fld"><label>Nama Penuh</label><input id="regNama" placeholder="Cikgu Ahmad bin Ali"></div>
+      <div class="fld"><label>Nama Sekolah</label><input id="regSekolah" placeholder="SK Contoh, Kuala Lumpur"></div>
+      <div class="fld"><label>Emel</label><input type="email" id="regEmail" placeholder="cikgu@sekolah.edu.my"></div>
+      <div class="fld"><label>Kata Laluan</label><input type="password" id="regPass" placeholder="Min 6 aksara"></div>
+      <button class="auth-btn" onclick="doRegister()">Daftar Akaun →</button>
+    </div>
+    <div class="auth-notice">Data anda <b>peribadi</b> — tidak boleh dilihat oleh pengguna lain.</div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="appWrap">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <button class="btn-top btn-save" id="saveBtn" onclick="downloadWord()">💾 Download Word</button>
+      <button class="btn-top btn-save" id="cloudSaveBtn" onclick="saveToCloud()">☁️ Simpan</button>
+      <button class="btn-top btn-print" onclick="window.print()">🖨️ Cetak / PDF</button>
+      <button class="btn-top btn-plans" onclick="showSavedPlans()">📋 RPH Saya</button>
+      <button class="btn-top btn-reset" onclick="confirmReset()">↺ Kosongkan</button>
+    </div>
+    <div class="top-bar-right">
+      <span class="user-chip" id="userChip">👤 Guru</span>
+      <button class="btn-top btn-logout" onclick="doLogout()">Keluar</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="container">
+      <h1>RPH Fleksi KSSR</h1>
+      <p class="subtitle">Rancangan Pengajaran Harian Fleksibel Kurikulum Standard Sekolah Rendah</p>
+      <div class="status-message" id="statusMsg"></div>
+
+      <!-- MAKLUMAT ASAS -->
+      <div class="section">
+        <div class="section-title">ℹ️ Maklumat Asas</div>
+        <div class="flex-row">
+          <div class="flex-col"><div class="label-title">Nama Sekolah</div><input type="text" id="namaSekolah"></div>
+          <div class="flex-col"><div class="label-title">Nama Guru</div><input type="text" id="namaGuru"></div>
+        </div>
+        <div class="flex-row">
+          <div class="flex-col"><div class="label-title">Nama Kelas</div><input type="text" id="namaKelas"></div>
+          <div class="flex-col"><div class="label-title">Minggu</div><input type="text" id="minggu"></div>
+          <div class="flex-col"><div class="label-title">Tarikh</div><input type="date" id="tarikh"></div>
+        </div>
+      </div>
+
+      <!-- MAKLUMAT KURIKULUM -->
+      <div class="section">
+        <div class="section-title">📚 Maklumat Kurikulum</div>
+        <div class="flex-row">
+          <div class="flex-col">
+            <div class="curriculum-label"><span>Peringkat</span></div>
+            <select id="tahun" onchange="generateTopik()">
+              <option>Pra 5</option><option>Pra 6</option><option>Tahun 1</option><option>Tahun 2</option>
+              <option>Tahun 3</option><option>Tahun 4</option><option>Tahun 5</option><option>Tahun 6</option>
+            </select>
+          </div>
+          <div class="flex-col">
+            <div class="curriculum-label"><span>Subjek</span></div>
+            <select id="subjek" onchange="handleSubjekChange()">
+              <option>Matematik</option><option>Bahasa Melayu</option><option>Bahasa Inggeris</option>
+              <option>Sains</option><option>Sejarah</option><option>Pendidikan Islam</option>
+              <option>Pendidikan Moral</option><option>PJPK</option><option>Pendidikan Seni Visual</option>
+              <option>Muzik</option><option>Bahasa Cina</option><option>Bahasa Tamil</option>
+              <option value="custom">Lain-lain</option>
+            </select>
+            <div class="custom-subject-input" id="customSubjekInput">
+              <input type="text" id="customSubject" placeholder="Masukkan nama subjek" onchange="generateTopik()" onkeyup="generateTopik()">
+            </div>
+          </div>
+          <div class="flex-col">
+            <div class="curriculum-label"><span>Topik / Unit</span></div>
+            <select id="topik" onchange="autoGenerate()"></select>
+          </div>
+        </div>
+        <div class="curriculum-label"><span>Standard Kandungan</span></div><textarea id="sk"></textarea>
+        <div class="curriculum-label"><span>Standard Pembelajaran</span></div><textarea id="sp"></textarea>
+        <div class="curriculum-label"><span>Objektif Pembelajaran</span></div><textarea id="obj"></textarea>
+        <div class="curriculum-label"><span>Kriteria Kejayaan</span></div><textarea id="kk"></textarea>
+      </div>
+
+      <!-- MASA -->
+      <div class="section">
+        <div class="section-title">⏱️ Masa Pengajaran</div>
+        <div class="flex-row">
+          <div class="flex-col"><div class="label-title">Masa Mula</div><input type="time" id="mula" oninput="kiraMasa()"></div>
+          <div class="flex-col"><div class="label-title">Masa Tamat</div><input type="time" id="tamat" oninput="kiraMasa()"></div>
+          <div class="flex-col"><div class="label-title">Jumlah Minit</div><input type="number" id="jumlahMasa" readonly></div>
+        </div>
+      </div>
+
+      <!-- AKTIVITI -->
+      <div class="section">
+        <div class="section-title">🎯 Aktiviti Pengajaran dan Pembelajaran</div>
+        <div id="aktivitiContainer"></div>
+        <button class="btn-add" onclick="tambahAktiviti()">+ Tambah Aktiviti</button>
+        <div class="label-title" style="margin-top:16px">Jumlah Minit Aktiviti</div>
+        <input type="number" id="jumlahAktiviti" readonly>
+      </div>
+
+      <!-- SOKONGAN -->
+      <div class="section">
+        <div class="section-title">🛠️ Sokongan Pembelajaran</div>
+        <div class="curriculum-label"><span>Bahan, Buku, Media (BBM)</span></div><textarea id="bbm"></textarea>
+        <div class="curriculum-label"><span>Elemen Kemahiran Abad Ke-21 (EMK)</span></div><textarea id="emk"></textarea>
+        <div class="curriculum-label"><span>Kemahiran Berfikir Aras Tinggi (KBAT)</span></div><textarea id="kbat"></textarea>
+        <div class="curriculum-label"><span>Catatan Khas / Lain-lain</span></div><textarea id="lainlain"></textarea>
+        <div class="curriculum-label"><span>Refleksi</span></div><textarea id="refleksi"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PLANS MODAL -->
+<div class="modal-overlay" id="plansModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3>📋 RPH Tersimpan</h3>
+      <button onclick="document.getElementById('plansModal').classList.remove('on')" style="background:none;border:none;font-size:18px;cursor:pointer;color:#718096">✕</button>
+    </div>
+    <div id="plansList"></div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="confirm-overlay" id="confirmModal">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Sahkan Tindakan</h3>
+    <p id="confirmMsg">Adakah anda pasti?</p>
+    <div class="confirm-btns">
+      <button style="background:#e2e8f0;color:#4a5568" onclick="document.getElementById('confirmModal').classList.remove('on')">Batal</button>
+      <button style="background:#ef4444;color:#fff" id="confirmOkBtn">Ya, Teruskan</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOv"><div class="spinner"></div></div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// ⚙️  KONFIGURASI SUPABASE
+// Tukar dua nilai di bawah dengan maklumat dari
+// Supabase dashboard anda → Settings → API
+// ══════════════════════════════════════════════
+const SUPABASE_URL = 'MASUKKAN_SUPABASE_URL_ANDA';
+const SUPABASE_ANON_KEY = 'MASUKKAN_SUPABASE_ANON_KEY_ANDA';
+// ══════════════════════════════════════════════
+
+const { createClient } = supabase;
+let sb = null;
+let currentUser = null;
+let allPlans = [];
+let editingId = null;
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', function(){
+  // Check if Supabase is configured
+  if(SUPABASE_URL === 'MASUKKAN_SUPABASE_URL_ANDA'){
+    document.getElementById('setupBanner').classList.add('on');
+  } else {
+    try {
+      sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch(e) {
+      console.error('Supabase init error:', e);
+    }
+  }
+  checkSession();
+  generateTopik();
+  tambahAktiviti();
+});
+
+// ── SESSION ──
+async function checkSession(){
+  if(!sb){ showAuth(); return; }
+  showLoading(true);
+  const { data: { session } } = await sb.auth.getSession();
+  if(session){
+    currentUser = session.user;
+    showApp();
+  } else {
+    showAuth();
+  }
+  showLoading(false);
+
+  // Listen for auth changes
+  sb.auth.onAuthStateChange(function(event, session){
+    if(event === 'SIGNED_IN' && session){
+      currentUser = session.user;
+      showApp();
+    } else if(event === 'SIGNED_OUT'){
+      currentUser = null;
+      showAuth();
+    }
+  });
+}
+
+// ── AUTH UI ──
+function showAuth(){
+  document.getElementById('authWrap').style.display = 'flex';
+  document.getElementById('appWrap').classList.remove('on');
+}
+function showApp(){
+  document.getElementById('authWrap').style.display = 'none';
+  document.getElementById('appWrap').classList.add('on');
+  // Set user chip
+  const meta = currentUser.user_metadata || {};
+  const nama = meta.nama || currentUser.email;
+  document.getElementById('userChip').textContent = '👤 ' + nama;
+  loadUserProfile();
+}
+function switchAuth(tab){
+  document.getElementById('atL').classList.toggle('on', tab==='login');
+  document.getElementById('atR').classList.toggle('on', tab==='reg');
+  document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
+  document.getElementById('regForm').style.display = tab==='reg'?'block':'none';
+}
+
+// ── LOGIN ──
+async function doLogin(){
+  if(!sb){ toast('Supabase belum dikonfigurasi.'); return; }
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  if(!email||!pass){ err.textContent='Sila isi emel dan kata laluan.'; err.classList.add('on'); return; }
+  showLoading(true);
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  showLoading(false);
+  if(error){
+    let msg = 'Log masuk gagal. Sila semak emel dan kata laluan.';
+    if(error.message.includes('Email not confirmed')) msg = 'Sila sahkan emel anda dahulu. Semak inbox/spam.';
+    err.textContent = msg; err.classList.add('on');
+  } else {
+    err.classList.remove('on');
+  }
+}
+
+// ── REGISTER ──
+async function doRegister(){
+  if(!sb){ toast('Supabase belum dikonfigurasi.'); return; }
+  const nama = document.getElementById('regNama').value.trim();
+  const sekolah = document.getElementById('regSekolah').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const err = document.getElementById('regErr');
+  if(!nama||!sekolah||!email||!pass){ err.textContent='Sila isi semua ruangan.'; err.classList.add('on'); return; }
+  if(pass.length < 6){ err.textContent='Kata laluan min 6 aksara.'; err.classList.add('on'); return; }
+  showLoading(true);
+  const { error } = await sb.auth.signUp({
+    email, password: pass,
+    options: { data: { nama, sekolah } }
+  });
+  showLoading(false);
+  if(error){
+    err.textContent = error.message; err.classList.add('on');
+  } else {
+    err.classList.remove('on');
+    toast('✅ Akaun berjaya dicipta! Sila semak emel untuk pengesahan.');
+    switchAuth('login');
+  }
+}
+
+// ── FORGOT PASSWORD ──
+async function doForgotPass(){
+  if(!sb){ toast('Supabase belum dikonfigurasi.'); return; }
+  const email = document.getElementById('loginEmail').value.trim();
+  if(!email){ toast('Sila masukkan emel anda dahulu.'); return; }
+  showLoading(true);
+  const { error } = await sb.auth.resetPasswordForEmail(email);
+  showLoading(false);
+  if(!error) toast('✅ E-mel set semula kata laluan telah dihantar!');
+  else toast('Ralat: ' + error.message);
+}
+
+// ── LOGOUT ──
+async function doLogout(){
+  if(!sb) return;
+  await sb.auth.signOut();
+  allPlans = [];
+  editingId = null;
+  resetForm();
+  toast('Anda telah log keluar.');
+}
+
+// ── LOAD USER PROFILE ──
+async function loadUserProfile(){
+  if(!sb||!currentUser) return;
+  const meta = currentUser.user_metadata || {};
+  if(meta.namaSekolah) document.getElementById('namaSekolah').value = meta.namaSekolah;
+  if(meta.namaGuru || meta.nama) document.getElementById('namaGuru').value = meta.namaGuru || meta.nama;
+}
+
+// ── FORM LOGIC ──
+function handleSubjekChange(){
+  const subjek = document.getElementById('subjek').value;
+  const ci = document.getElementById('customSubjekInput');
+  if(subjek === 'custom'){ ci.classList.add('show'); document.getElementById('customSubject').focus(); }
+  else { ci.classList.remove('show'); generateTopik(); }
+}
+function generateTopik(){
+  const topik = document.getElementById('topik');
+  topik.innerHTML = '';
+  for(let i=1;i<=12;i++){
+    const opt = document.createElement('option');
+    opt.text = 'Unit ' + i; opt.value = i;
+    topik.add(opt);
+  }
+  autoGenerate();
+}
+function getSubjekName(){
+  const s = document.getElementById('subjek').value;
+  if(s === 'custom') return document.getElementById('customSubject').value || 'Subjek Kustom';
+  return s;
+}
+function autoGenerate(){
+  var subjek=getSubjekName();
+  var unit=document.getElementById('topik').value;
+  var isCina=subjek==='中文'||subjek==='华文'||subjek==='Bahasa Cina';
+  var isTamil=subjek.includes('Tamil');
+  if(isCina){
+    document.getElementById('sk').value='第'+unit+'单元标准内容：语言技能培养。';
+    document.getElementById('sp').value=unit+'.1 听\n'+unit+'.2 说\n'+unit+'.3 读写';
+    document.getElementById('obj').value='学生能够掌握基本语言技能并应用。';
+    document.getElementById('kk').value='完成课堂任务并正确回答问题。';
+    document.getElementById('emk').value='沟通能力与价值观教育。';
+    document.getElementById('kbat').value='如何在现实生活中运用所学语言？';
+  } else if(isTamil){
+    document.getElementById('sk').value='அலகு '+unit+' தரநிலை: மொழித் திறன் வளர்ச்சி.';
+    document.getElementById('sp').value=unit+'.1 கேட்பு\n'+unit+'.2 வாசிப்பு\n'+unit+'.3 எழுதுதல்';
+    document.getElementById('obj').value='மாணவர்கள் மொழித் திறனைப் பயன்படுத்துவர்.';
+    document.getElementById('kk').value='பயிற்சியை வெற்றிகரமாக நிறைவு செய்தல்.';
+    document.getElementById('emk').value='மதிப்புணர்வு மற்றும் தொடர்புத் திறன்.';
+    document.getElementById('kbat').value='வாழ்க்கையில் கற்றதைக் எப்படி பயன்படுத்தலாம்?';
+  } else {
+    document.getElementById('sk').value='Standard Kandungan Unit '+unit;
+    document.getElementById('sp').value=unit+'.1 Kemahiran asas\n'+unit+'.2 Aplikasi\n'+unit+'.3 Penyelesaian masalah';
+    document.getElementById('obj').value='Murid dapat menguasai kemahiran dan mengaplikasi.';
+    document.getElementById('kk').value='Sekurang-kurangnya 3 daripada 5 soalan dijawab dengan betul.';
+    document.getElementById('emk').value='Nilai murni dan kreativiti.';
+    document.getElementById('kbat').value='Bagaimana konsep ini digunakan dalam kehidupan sebenar?';
+  }
+}
+function kiraMasa(){
+  const mula=document.getElementById('mula').value;
+  const tamat=document.getElementById('tamat').value;
+  if(mula&&tamat){
+    const [mj,mm]=mula.split(':').map(Number);
+    const [tj,tm]=tamat.split(':').map(Number);
+    let total=(tj*60+tm)-(mj*60+mm);
+    if(total<0)total+=24*60;
+    document.getElementById('jumlahMasa').value=total>0?total:0;
+  }
+}
+function tambahAktiviti(){
+  var div=document.createElement('div');
+  div.className='activity-box';
+  var row=document.createElement('div'); row.className='activity-row';
+  var mintDiv=document.createElement('div'); mintDiv.className='activity-minit';
+  var mintLbl=document.createElement('div'); mintLbl.className='label-title'; mintLbl.textContent='Minit';
+  var mintInp=document.createElement('input'); mintInp.type='number'; mintInp.min='0'; mintInp.className='activity-time';
+  mintInp.oninput=kiraJumlahAktiviti;
+  mintDiv.appendChild(mintLbl); mintDiv.appendChild(mintInp);
+  var descDiv=document.createElement('div'); descDiv.className='activity-huraian';
+  var descLbl=document.createElement('div'); descLbl.className='label-title'; descLbl.textContent='Huraian Aktiviti';
+  var descTa=document.createElement('textarea'); descTa.className='activity-desc';
+  descDiv.appendChild(descLbl); descDiv.appendChild(descTa);
+  var rmBtn=document.createElement('button'); rmBtn.className='activity-remove'; rmBtn.textContent='Buang';
+  rmBtn.onclick=function(){this.closest('.activity-box').remove();kiraJumlahAktiviti()};
+  row.appendChild(mintDiv); row.appendChild(descDiv); row.appendChild(rmBtn);
+  div.appendChild(row);
+  document.getElementById('aktivitiContainer').appendChild(div);
+}
+function kiraJumlahAktiviti(){
+  let total=0;
+  document.querySelectorAll('#aktivitiContainer .activity-time').forEach(function(i){total+=parseInt(i.value)||0});
+  document.getElementById('jumlahAktiviti').value=total;
+}
+
+// ── GET FORM DATA ──
+function getFormData(){
+  const activities=[];
+  document.querySelectorAll('#aktivitiContainer .activity-box').forEach(function(box){
+    const time=box.querySelector('.activity-time').value;
+    const desc=box.querySelector('.activity-desc').value;
+    if(time||desc) activities.push({minutes:parseInt(time)||0,description:desc});
+  });
+  return {
+    namaSekolah:document.getElementById('namaSekolah').value||'',
+    namaGuru:document.getElementById('namaGuru').value||'',
+    namaKelas:document.getElementById('namaKelas').value||'',
+    minggu:document.getElementById('minggu').value||'',
+    tarikh:document.getElementById('tarikh').value||'',
+    tahun:document.getElementById('tahun').value,
+    subjek:getSubjekName(),
+    topik:document.getElementById('topik').value,
+    sk:document.getElementById('sk').value,
+    sp:document.getElementById('sp').value,
+    obj:document.getElementById('obj').value,
+    kk:document.getElementById('kk').value,
+    mula:document.getElementById('mula').value||'',
+    tamat:document.getElementById('tamat').value||'',
+    jumlahMasa:document.getElementById('jumlahMasa').value||'0',
+    aktiviti:JSON.stringify(activities),
+    bbm:document.getElementById('bbm').value,
+    emk:document.getElementById('emk').value,
+    kbat:document.getElementById('kbat').value,
+    lainlain:document.getElementById('lainlain').value,
+    refleksi:document.getElementById('refleksi').value
+  };
+}
+
+// ── LOAD FORM ──
+function loadFormData(plan){
+  document.getElementById('namaSekolah').value=plan.namaSekolah||'';
+  document.getElementById('namaGuru').value=plan.namaGuru||'';
+  document.getElementById('namaKelas').value=plan.namaKelas||'';
+  document.getElementById('minggu').value=plan.minggu||'';
+  document.getElementById('tarikh').value=plan.tarikh||'';
+  document.getElementById('tahun').value=plan.tahun||'Tahun 1';
+  document.getElementById('sk').value=plan.sk||'';
+  document.getElementById('sp').value=plan.sp||'';
+  document.getElementById('obj').value=plan.obj||'';
+  document.getElementById('kk').value=plan.kk||'';
+  document.getElementById('mula').value=plan.mula||'';
+  document.getElementById('tamat').value=plan.tamat||'';
+  document.getElementById('jumlahMasa').value=plan.jumlahMasa||'0';
+  document.getElementById('bbm').value=plan.bbm||'';
+  document.getElementById('emk').value=plan.emk||'';
+  document.getElementById('kbat').value=plan.kbat||'';
+  document.getElementById('lainlain').value=plan.lainlain||'';
+  document.getElementById('refleksi').value=plan.refleksi||'';
+  // Aktiviti
+  document.getElementById('aktivitiContainer').innerHTML='';
+  const acts=JSON.parse(plan.aktiviti||'[]');
+  if(acts.length){
+    acts.forEach(function(a){
+      tambahAktiviti();
+      const boxes=document.querySelectorAll('#aktivitiContainer .activity-box');
+      const last=boxes[boxes.length-1];
+      last.querySelector('.activity-time').value=a.minutes||'';
+      last.querySelector('.activity-desc').value=a.description||'';
+    });
+    kiraJumlahAktiviti();
+  } else {
+    tambahAktiviti();
+  }
+  // Set subjek
+  const subjectOpts=document.getElementById('subjek').options;
+  let found=false;
+  for(let i=0;i<subjectOpts.length;i++){
+    if(subjectOpts[i].value===plan.subjek||subjectOpts[i].text===plan.subjek){
+      document.getElementById('subjek').selectedIndex=i; found=true; break;
+    }
+  }
+  if(!found){
+    document.getElementById('subjek').value='custom';
+    document.getElementById('customSubjekInput').classList.add('show');
+    document.getElementById('customSubject').value=plan.subjek||'';
+  }
+  generateTopik();
+  // Set topik after generating
+  setTimeout(function(){
+    const topikEl=document.getElementById('topik');
+    for(let i=0;i<topikEl.options.length;i++){
+      if(topikEl.options[i].value==plan.topik){topikEl.selectedIndex=i;break}
+    }
+  },50);
+}
+
+// ── SAVE TO CLOUD ──
+async function saveToCloud(){
+  if(!sb||!currentUser){ toast('Sila log masuk dahulu.'); return; }
+  showLoading(true);
+  const data=getFormData();
+  data.user_id=currentUser.id;
+  data.updated_at=new Date().toISOString();
+  let result;
+  if(editingId){
+    result=await sb.from('rph_plans').update(data).eq('id',editingId).eq('user_id',currentUser.id);
+  } else {
+    data.created_at=new Date().toISOString();
+    result=await sb.from('rph_plans').insert(data).select().single();
+    if(result.data) editingId=result.data.id;
+  }
+  showLoading(false);
+  if(result.error){
+    toast('❌ Gagal simpan: '+result.error.message);
+  } else {
+    toast('✅ RPH berjaya disimpan ke cloud!');
+    document.getElementById('cloudSaveBtn').textContent='✅ Tersimpan';
+    setTimeout(function(){document.getElementById('cloudSaveBtn').textContent='☁️ Simpan'},2000);
+  }
+}
+
+// ── LOAD SAVED PLANS ──
+async function showSavedPlans(){
+  if(!sb||!currentUser){ toast('Sila log masuk dahulu.'); return; }
+  showLoading(true);
+  var res=await sb.from('rph_plans').select('*').eq('user_id',currentUser.id).order('updated_at',{ascending:false});
+  showLoading(false);
+  if(res.error){ toast('Gagal memuatkan: '+res.error.message); return; }
+  allPlans=res.data||[];
+  var el=document.getElementById('plansList');
+  el.innerHTML='';
+  if(!allPlans.length){
+    var ep=document.createElement('div');
+    ep.style.cssText='text-align:center;padding:2rem;color:#718096;font-size:13px';
+    ep.textContent='Belum ada RPH tersimpan. Klik Simpan untuk menyimpan RPH anda.';
+    el.appendChild(ep);
+  } else {
+    allPlans.forEach(function(p){
+      var item=document.createElement('div'); item.className='plan-item';
+      var info=document.createElement('div'); info.className='plan-item-info';
+      var s2=document.createElement('div'); s2.className='plan-item-subject'; s2.textContent=p.subjek||'Tanpa Nama';
+      var m2=document.createElement('div'); m2.className='plan-item-meta';
+      m2.textContent=(p.namaGuru?p.namaGuru+' | ':'')+( p.tarikh||'')+(p.namaKelas?' | '+p.namaKelas:'')+(p.tahun?' | '+p.tahun:'');
+      info.appendChild(s2); info.appendChild(m2);
+      var bt=document.createElement('div'); bt.className='plan-item-btns';
+      var b1=document.createElement('button'); b1.className='btn-open'; b1.textContent='Buka';
+      b1.addEventListener('click',(function(id){return function(){openPlan(id)}})(p.id));
+      var b2=document.createElement('button'); b2.className='btn-dl'; b2.textContent='Word';
+      b2.addEventListener('click',(function(id){return function(){dlPlan(id)}})(p.id));
+      var b3=document.createElement('button'); b3.className='btn-del'; b3.textContent='Padam';
+      b3.addEventListener('click',(function(id){return function(){deletePlan(id)}})(p.id));
+      bt.appendChild(b1); bt.appendChild(b2); bt.appendChild(b3);
+      item.appendChild(info); item.appendChild(bt);
+      el.appendChild(item);
+    });
+  }
+  document.getElementById('plansModal').classList.add('on');
+}
+function openPlan(id){
+  const plan=allPlans.find(function(p){return p.id===id});
+  if(!plan)return;
+  loadFormData(plan);
+  editingId=id;
+  document.getElementById('plansModal').classList.remove('on');
+  toast('RPH "'+plan.subjek+'" dibuka.');
+  window.scrollTo(0,0);
+}
+
+function dlPlan(id){
+  const plan=allPlans.find(function(p){return p.id===id});
+  if(!plan)return;
+  const acts=JSON.parse(plan.aktiviti||'[]');
+  generateWordDoc(plan, acts, plan.subjek, plan.tarikh);
+}
+
+function deletePlan(id){
+  const plan=allPlans.find(function(p){return p.id===id});
+  if(!plan)return;
+  showConfirm(
+    'Padam RPH',
+    'Padam RPH "'+plan.subjek+'" ('+plan.tarikh+')? Tidak boleh dibatalkan.',
+    async function(){
+      showLoading(true);
+      const { error }=await sb.from('rph_plans').delete().eq('id',id).eq('user_id',currentUser.id);
+      showLoading(false);
+      if(error){ toast('Gagal padam: '+error.message); return; }
+      if(editingId===id) editingId=null;
+      toast('🗑️ RPH dipadam.');
+      showSavedPlans();
+    }
+  );
+}
+
+// ── DOWNLOAD WORD ──
+function downloadWord(){
+  const data=getFormData();
+  const acts=JSON.parse(data.aktiviti||'[]');
+  generateWordDoc(data, acts, data.subjek, data.tarikh);
+  // Also auto-save to cloud
+  if(sb&&currentUser) saveToCloud();
+}
+
+function generateWordDoc(data, activities, subject, date){
+  const dateFormatted=(date||'').replace(/-/g,'_');
+  const activitiesRows=activities.map(function(a){
+    return '<tr><td style="border:1px solid #999;padding:8px;width:60px;text-align:center;">'+a.minutes+'</td>'
+      +'<td style="border:1px solid #999;padding:8px;">'+escH(a.description).split('\n').join('<br>')+'</td></tr>';
+  }).join('');
+  const htmlContent='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>RPH - '+escH(subject)+'</title>'
+    +'<style>body{font-family:Calibri,Tahoma,sans-serif;font-size:11pt;margin:40px;line-height:1.5}'
+    +'h1{text-align:center;color:#1e3a8a;font-size:18pt;margin-bottom:4px}'
+    +'.subtitle{text-align:center;color:#666;font-size:11pt;margin-bottom:20px}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:16px}'
+    +'td,th{border:1px solid #999;padding:8px;vertical-align:top}'
+    +'th{background-color:#e5e7eb;font-weight:bold;color:#000}'
+    +'.section-title{background-color:#1e3a8a;color:white;font-weight:bold;padding:8px;font-size:11pt}'
+    +'.label{font-weight:bold;width:180px}</style></head><body>'
+    +'<h1>RANCANGAN PENGAJARAN HARIAN (RPH)</h1>'
+    +'<p class="subtitle">Rancangan Pengajaran Harian Fleksibel Kurikulum Standard Sekolah Rendah</p>'
+    +'<table><tr><td class="section-title" colspan="2">MAKLUMAT ASAS</td></tr>'
+    +'<tr><td class="label">Nama Sekolah</td><td>'+escH(data.namaSekolah||'Tidak dinyatakan')+'</td></tr>'
+    +'<tr><td class="label">Nama Guru</td><td>'+escH(data.namaGuru||'Tidak dinyatakan')+'</td></tr>'
+    +'<tr><td class="label">Nama Kelas</td><td>'+escH(data.namaKelas||'Tidak dinyatakan')+'</td></tr>'
+    +'<tr><td class="label">Minggu</td><td>'+escH(data.minggu||'')+'</td></tr>'
+    +'<tr><td class="label">Tarikh</td><td>'+escH(date||'')+'</td></tr></table>'
+    +'<table><tr><td class="section-title" colspan="2">MAKLUMAT KURIKULUM</td></tr>'
+    +'<tr><td class="label">Peringkat</td><td>'+escH(data.tahun||'')+'</td></tr>'
+    +'<tr><td class="label">Subjek</td><td>'+escH(subject)+'</td></tr>'
+    +'<tr><td class="label">Topik / Unit</td><td>'+escH(data.topik||'')+'</td></tr>'
+    +'<tr><td class="label">Standard Kandungan</td><td>'+(data.sk||'').split('\n').join('<br>')+'</td></tr>'
+    +'<tr><td class="label">Standard Pembelajaran</td><td>'+(data.sp||'').split('\n').join('<br>')+'</td></tr>'
+    +'<tr><td class="label">Objektif Pembelajaran</td><td>'+(data.obj||'').split('\n').join('<br>')+'</td></tr>'
+    +'<tr><td class="label">Kriteria Kejayaan</td><td>'+(data.kk||'').split('\n').join('<br>')+'</td></tr></table>'
+    +'<table><tr><td class="section-title" colspan="2">MASA PENGAJARAN</td></tr>'
+    +'<tr><td class="label">Masa Mula</td><td>'+escH(data.mula||'')+'</td></tr>'
+    +'<tr><td class="label">Masa Tamat</td><td>'+escH(data.tamat||'')+'</td></tr>'
+    +'<tr><td class="label">Jumlah Minit</td><td>'+escH(data.jumlahMasa||'0')+'</td></tr></table>'
+    +'<table><tr><td class="section-title" colspan="2">AKTIVITI PENGAJARAN DAN PEMBELAJARAN</td></tr>'
+    +'<tr><th style="width:60px">Minit</th><th>Huraian Aktiviti</th></tr>'
+    +(activitiesRows||'<tr><td colspan="2" style="text-align:center;color:#999">Tiada aktiviti</td></tr>')+'</table>'
+    +'<table><tr><td class="section-title" colspan="2">SOKONGAN PEMBELAJARAN</td></tr>'
+    +'<tr><td class="label">BBM</td><td>'+(data.bbm||'').split('\n').join('<br>')+'</td></tr>'
+    +'<tr><td class="label">EMK</td><td>'+(data.emk||'').split('\n').join('<br>')+'</td></tr>'
+    +'<tr><td class="label">KBAT</td><td>'+(data.kbat||'').split('\n').join('<br>')+'</td></tr>'
+    +'<tr><td class="label">Catatan Khas</td><td>'+(data.lainlain||'').split('\n').join('<br>')+'</td></tr>'
+    +'<tr><td class="label">Refleksi</td><td>'+(data.refleksi||'').split('\n').join('<br>')+'</td></tr></table>'
+    +'<p style="font-size:10pt;color:#999;text-align:center;margin-top:30px">Dokumen ini dijana automatik pada '+new Date().toLocaleString('ms-MY')+'</p>'
+    +'</body></html>';
+  const blob=new Blob(['﻿'+htmlContent],{type:'application/msword;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const subjectClean=subject.replace(/[^a-zA-Z0-9]/g,'');
+  a.download='RPH_'+subjectClean+'_'+dateFormatted+'.doc';
+  a.style.display='none'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(a.href)},100);
+  toast('✅ Fail Word berjaya dimuat turun!');
+}
+
+// ── RESET ──
+function confirmReset(){
+  showConfirm('Kosongkan Borang','Semua data dalam borang akan dipadam. Teruskan?',function(){
+    resetForm(); toast('Borang telah dikosongkan.');
+  });
+}
+function resetForm(){
+  ['namaSekolah','namaGuru','namaKelas','minggu','tarikh','sk','sp','obj','kk',
+   'mula','tamat','jumlahMasa','jumlahAktiviti','bbm','emk','kbat','lainlain','refleksi'].forEach(function(id){
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('aktivitiContainer').innerHTML='';
+  tambahAktiviti();
+  editingId=null;
+  generateTopik();
+}
+
+// ── HELPERS ──
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function toast(m,d){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},d||2800)}
+function showLoading(v){document.getElementById('loadingOv').classList.toggle('on',v)}
+function showStatus(msg,isErr){var el=document.getElementById('statusMsg');el.textContent=msg;el.className='status-message show '+(isErr?'status-error':'status-success');setTimeout(function(){el.classList.remove('show')},3000)}
+function showConfirm(title,msg,cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg;
+  document.getElementById('confirmModal').classList.add('on');
+  document.getElementById('confirmOkBtn').onclick=function(){
+    document.getElementById('confirmModal').classList.remove('on');
+    cb();
+  };
+}
+</script>
+
+<!-- SUPABASE SETUP GUIDE (shown below auth form if not configured) -->
+
+</body>
+</html>
