@@ -294,6 +294,11 @@ var CK_TABLE = 'rph_fleksi_data';
 
 var ckUrlParams = new URLSearchParams(window.location.search);
 var KOD_SEKOLAH = (ckUrlParams.get('t') || '').trim().toUpperCase();
+if(KOD_SEKOLAH){
+  try{ localStorage.setItem('ck_kod_sekolah_remembered', KOD_SEKOLAH); }catch(e){}
+}else{
+  try{ KOD_SEKOLAH = (localStorage.getItem('ck_kod_sekolah_remembered')||'').trim().toUpperCase(); }catch(e){}
+}
 
 function ckMakeEmail(username, kodSekolah){
   var u = (username||'').trim().toLowerCase().replace(/[^a-z0-9_.]/g,'');
@@ -925,18 +930,36 @@ async function muatTurunPDF() {
 function muatTurunWord() {
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
     <head><meta charset="utf-8"><title>RPH</title></head>
-    <body>${buildExportHTML()}<script>
-// ── KEEP-ALIVE — pastikan Supabase tidak tidur ──────────────
-(function(){
-  var _kaUrl = typeof SUPA_URL !== 'undefined' ? SUPA_URL : (typeof SB_URL !== 'undefined' ? SB_URL : '');
-  var _kaKey = typeof SUPA_KEY !== 'undefined' ? SUPA_KEY : (typeof SB_KEY !== 'undefined' ? SB_KEY : '');
-  if (!_kaUrl || !_kaKey) return;
-  if (window._ekKaTimer) clearInterval(window._ekKaTimer);
-  window._ekKaTimer = setInterval(function(){
-    fetch(_kaUrl+'/rest/v1/', {headers:{'apikey':_kaKey,'Authorization':'Bearer '+_kaKey}}).catch(function(){});
-  }, 4*60*1000);
-  console.log('EduKit keep-alive started');
-})();
+    <body>${buildExportHTML()}</body></html>`;
+  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = buildFilename('doc');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('✓ Dokumen Word dimuat turun');
+}
+
+// ─── Initialize (dipanggil selepas log masuk berjaya) ───
+async function ckOnLoginHook(){
+  var cloud = await ckCloudPull();
+  if(cloud){ localStorage.setItem(RPH_STORAGE_KEY, JSON.stringify(cloud)); }
+  const loaded = muatDataTersimpan();
+  if (!loaded) {
+    generateTopik();
+    addActivity('Permulaan', '5', '');
+    addActivity('Perkembangan', '20', '');
+    addActivity('Aktiviti', '20', '');
+    addActivity('Penutup', '5', '');
+  } else {
+    showToast('Draf tersimpan sebelum ini telah dimuatkan');
+  }
+  lucide.createIcons();
+}
+
 </script>
 
 <style>
@@ -971,38 +994,6 @@ function muatTurunWord() {
   } else { scan(); }
   new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
 })();
-</script>
-
-</body></html>`;
-  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = buildFilename('doc');
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast('✓ Dokumen Word dimuat turun');
-}
-
-// ─── Initialize (dipanggil selepas log masuk berjaya) ───
-async function ckOnLoginHook(){
-  var cloud = await ckCloudPull();
-  if(cloud){ localStorage.setItem(RPH_STORAGE_KEY, JSON.stringify(cloud)); }
-  const loaded = muatDataTersimpan();
-  if (!loaded) {
-    generateTopik();
-    addActivity('Permulaan', '5', '');
-    addActivity('Perkembangan', '20', '');
-    addActivity('Aktiviti', '20', '');
-    addActivity('Penutup', '5', '');
-  } else {
-    showToast('Draf tersimpan sebelum ini telah dimuatkan');
-  }
-  lucide.createIcons();
-}
-
 </script>
 </body>
 </html>
